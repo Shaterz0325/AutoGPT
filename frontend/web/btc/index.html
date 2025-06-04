@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BTC Whale Tracker</title>
+<style>
+  body {
+    background-color: black;
+    color: #00ff00;
+    font-family: "Courier New", Courier, monospace;
+    margin: 0;
+    padding: 20px;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  th, td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #00ff00;
+  }
+  th {
+    text-align: left;
+  }
+</style>
+</head>
+<body>
+<h1>BTC Whale Tracker</h1>
+<table id="trades">
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Amount (BTC)</th>
+      <th>Price (USD)</th>
+      <th>Total (USD)</th>
+      <th>Time</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+
+<script>
+const threshold = 0.5; // minimum BTC to display
+async function fetchTrades() {
+  try {
+    const resp = await fetch('https://www.bitstamp.net/api/v2/transactions/btcusd/?limit=100');
+    const data = await resp.json();
+    const rows = data
+      .filter(t => parseFloat(t.amount) >= threshold)
+      .map(t => {
+        const type = t.type === '0' ? 'Buy' : 'Sell';
+        const amount = parseFloat(t.amount);
+        const price = parseFloat(t.price);
+        const total = (amount * price).toFixed(2);
+        const time = new Date(parseInt(t.date) * 1000).toLocaleString();
+        return `<tr><td>${type}</td><td>${amount}</td><td>${price}</td><td>${total}</td><td>${time}</td></tr>`;
+      })
+      .join('');
+    document.querySelector('#trades tbody').innerHTML = rows;
+  } catch (err) {
+    console.error('Failed to fetch trades', err);
+  }
+}
+
+fetchTrades();
+setInterval(fetchTrades, 30000); // refresh every 30s
+</script>
+</body>
+</html>
